@@ -17,11 +17,11 @@ process_downloads_page() {
   local api_key="$2"
   local page="$3"
 
-  local downloads=$(curl -s -H "X-Api-Key: $api_key" "$arr_url/api/v3/queue?pageSize=$PAGE_SIZE&page=$page")
+  local downloads=$(curl -s -H "X-Api-Key: $api_key" "$arr_url/api/v3/queue?pageSize=$PAGE_SIZE&page=$page&includeUnknownSeriesItems=true&includeUnknownMovieItems=true")
 
   # Filtering downloads with target trackedDownloadStatus
   local target_downloads=$(echo "$downloads" | jq -c ".records[] | select(.trackedDownloadStatus == \"$TARGET_STATUS\")")
-  [[ -z "$target_downloads" ]] && { echo "No target downloads found. Skipping this Page"; return; }
+  [[ -z "$target_downloads" ]] && { echo "No target downloads found. Skipping this page"; return; }
   # Deleting downloads with target trackedDownloadStatus
   while read -r download; do
     local id=$(echo "$download" | jq '.id')
@@ -34,9 +34,9 @@ process_downloads_page() {
 for ((i = 0; i < ${#ARR_INSTANCES[@]}; i += 2)); do
   arr_url="${ARR_INSTANCES[i]}"
   api_key="${ARR_INSTANCES[i+1]}"
-
+  echo "Start fetching queue for instance $arr_url"
   # Fetch the first page to calculate the total number of pages
-  downloads=$(curl -s -H "X-Api-Key: $api_key" "$arr_url/api/v3/queue?pageSize=$PAGE_SIZE&page=1")
+  downloads=$(curl -s -H "X-Api-Key: $api_key" "$arr_url/api/v3/queue?pageSize=$PAGE_SIZE&page=1&includeUnknownSeriesItems=true&includeUnknownMovieItems=true")
   total_items=$(echo "$downloads" | jq '.totalRecords')
   total_pages=$((($total_items + $PAGE_SIZE - 1) / $PAGE_SIZE))
 
